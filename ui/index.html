@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>corral</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🦙</text></svg>" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="login" class="login" hidden>
+    <div class="login-card">
+      <div class="brand big"><span class="mark">🦙</span> corral</div>
+      <p>Paste the admin token, or open the dashboard link that <code>corral admin</code> prints.</p>
+      <form id="login-form">
+        <input id="login-token" placeholder="cra_…" autocomplete="off" spellcheck="false" />
+        <button class="btn primary">Open dashboard</button>
+      </form>
+      <p class="err" id="login-err"></p>
+    </div>
+  </div>
+
+  <div id="app" class="app" hidden>
+    <header class="top">
+      <div class="brand"><span class="mark">🦙</span> corral</div>
+      <label class="machine-pick">
+        <span class="muted">machine</span>
+        <select id="machine"></select>
+      </label>
+      <div class="status" id="status"></div>
+    </header>
+
+    <nav class="side" id="nav">
+      <a data-tab="overview" class="active">Overview</a>
+      <a data-tab="requests">Requests</a>
+      <a data-tab="models">Models</a>
+      <a data-tab="catalog">Catalog</a>
+      <a data-tab="tokens">App tokens</a>
+      <a data-tab="machines">Machines</a>
+      <div class="side-foot muted" id="foot"></div>
+    </nav>
+
+    <main id="main"></main>
+  </div>
+
+  <div id="toast" class="toast" hidden></div>
+  <script type="module" src="app.js"></script>
+</body>
+</html>

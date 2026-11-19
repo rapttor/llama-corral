@@ -1,0 +1,21 @@
+{
+  "name": "llama-corral",
+  "version": "0.1.0",
+  "description": "The control plane for your Ollama machines: usage-tracking gateway, token auth, model management, multi-machine hub. Keep your chat UI.",
+  "type": "module",
+  "bin": {
+    "corral": "bin/corral.js",
+    "llama-corral": "bin/corral.js"
+  },
+  "files": ["bin", "src", "ui", "data", "README.md", "LICENSE"],
+  "scripts": {
+    "start": "node bin/corral.js start",
+    "mock": "node test/mock-ollama.js",
+    "test": "node test/smoke.js"
+  },
+  "engines": {
+    "node": ">=22.13"
+  },
+  "keywords": ["ollama", "llm", "local-ai", "gateway", "proxy", "usage", "monitoring", "dashboard", "self-hosted"],
+  "license": "MIT"
+}
