@@ -58,6 +58,17 @@ export function openDb(dataDir) {
       created_at INTEGER NOT NULL
     );
 
+    CREATE TABLE IF NOT EXISTS agents (
+      id INTEGER PRIMARY KEY,
+      name TEXT NOT NULL,
+      emoji TEXT,
+      description TEXT,
+      system TEXT,
+      model TEXT,
+      params TEXT,
+      created_at INTEGER NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS kv (
       key TEXT PRIMARY KEY,
       value TEXT

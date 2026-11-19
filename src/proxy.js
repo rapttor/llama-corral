@@ -2,6 +2,7 @@ import http from 'node:http';
 import https from 'node:https';
 import { Meter } from './meter.js';
 import { findToken } from './db.js';
+import { isAdmin } from './auth.js';
 
 // Endpoints that run a model. Only these are written to the usage log.
 const INFERENCE = new Set([
@@ -30,6 +31,7 @@ const HOP = new Set([
   'host',
   'authorization',
   'content-length',
+  'x-corral-admin', // never forward the admin token upstream
 ]);
 
 const MAX_BODY = 200 * 1024 * 1024;
@@ -75,6 +77,9 @@ export function createProxy({ cfg, db, state }) {
       if (!tokenRow) return deny(res, 'invalid or revoked token');
       client = tokenRow.name;
       touch.run(started, tokenRow.id);
+    } else if (isAdmin(req, cfg)) {
+      // The dashboard's test chat (local, or relayed from a hub) authenticates with the admin token.
+      client = 'corral-chat';
     } else if (cfg.localOpen && isLocal(req)) {
       client = 'local';
     } else if (req.method === 'OPTIONS' || (req.method !== 'POST' && PUBLIC.has(path))) {

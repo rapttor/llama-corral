@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Example: Ollama on a private port so corral can own :11434. Edit the paths for your machine. -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.corral.ollama-headless</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/usr/local/bin/ollama</string>
+    <string>serve</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>OLLAMA_HOST</key>
+    <string>127.0.0.1:11436</string>
+    <key>OLLAMA_MODELS</key>
+    <string>/Volumes/m2/ollama-models</string>
+    <key>OLLAMA_CONTEXT_LENGTH</key>
+    <string>64000</string>
+  </dict>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/admin/.corral/logs/ollama.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/admin/.corral/logs/ollama.log</string>
+</dict>
+</plist>

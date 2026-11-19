@@ -1,5 +1,7 @@
-import crypto from 'node:crypto';
+import { once } from 'node:events';
 import { createToken, kvGet } from './db.js';
+import { isAdmin } from './auth.js';
+import { createAgents } from './agents.js';
 import { catalogView } from './catalog.js';
 import { checkUpdates, skipUpdate } from './updates.js';
 
@@ -8,6 +10,13 @@ const VERSION = '0.1.0';
 export function createApi({ cfg, db, state, ollama, jobs, hardware, startedAt }) {
   const routes = [];
   const on = (method, pattern, fn) => routes.push({ method, re: new RegExp(`^${pattern}$`), fn });
+  const agents = createAgents(db);
+
+  // ---------- agents (saved system prompt + params; shape the test chat) ----------
+  on('GET', '/agents', () => agents.list());
+  on('POST', '/agents', ({ body }) => agents.create(body));
+  on('PUT', '/agents/(\\d+)', ({ params, body }) => agents.update(Number(params[0]), body));
+  on('DELETE', '/agents/(\\d+)', ({ params }) => agents.remove(Number(params[0])));
 
   // ---------- overview & usage ----------
   on('GET', '/overview', () => {
@@ -268,6 +277,26 @@ export function createApi({ cfg, db, state, ollama, jobs, hardware, startedAt })
     throw err;
   }
 
+  // Streams a test-chat request to another machine's gateway and pipes the NDJSON back unchanged.
+  async function relayChat(r, body, res) {
+    const ctrl = new AbortController();
+    res.on('close', () => ctrl.abort());
+    try {
+      const up = await fetch(`${r.url}/api/chat`, {
+        method: 'POST',
+        headers: { 'x-corral-admin': r.admin_token, 'content-type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: ctrl.signal,
+      });
+      res.writeHead(up.status, { 'content-type': up.headers.get('content-type') || 'application/x-ndjson', 'cache-control': 'no-store' });
+      for await (const chunk of up.body ?? []) if (!res.write(chunk)) await once(res, 'drain');
+      res.end();
+    } catch (e) {
+      if (res.headersSent) return res.end();
+      send(res, 502, { error: `machine unreachable: ${e.message}` });
+    }
+  }
+
   // ---------- dispatcher ----------
   return async function api(req, res, subpath, query) {
     if (!isAdmin(req, cfg)) return send(res, 401, { error: 'admin token required' });
@@ -279,6 +308,7 @@ export function createApi({ cfg, db, state, ollama, jobs, hardware, startedAt })
       if (rm) {
         const r = db.prepare('SELECT * FROM remotes WHERE id = ?').get(Number(rm[1]));
         if (!r) return send(res, 404, { error: 'unknown machine' });
+        if (rm[2] === '/chat' && req.method === 'POST') return relayChat(r, body, res);
         const qs = new URLSearchParams(query).toString();
         out = await remoteCall(r, req.method, rm[2] + (qs ? `?${qs}` : ''), body);
       } else {
@@ -296,13 +326,6 @@ export function createApi({ cfg, db, state, ollama, jobs, hardware, startedAt })
       send(res, e.status || 500, { error: e.message });
     }
   };
-}
-
-function isAdmin(req, cfg) {
-  const given = String(req.headers['x-corral-admin'] || '');
-  const a = Buffer.from(given);
-  const b = Buffer.from(cfg.adminToken);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 
 function need(v, name) {
